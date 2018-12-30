@@ -140,7 +140,8 @@ class AdaptiveETA(Timer):
             self.samples.append(sample)
         return self.samples.pop(0)
 
-    def _eta(self, maxval, currval, elapsed):
+    @staticmethod
+    def _eta(maxval, currval, elapsed):
         return elapsed * maxval / float(currval) - elapsed
 
     def update(self, pbar):
