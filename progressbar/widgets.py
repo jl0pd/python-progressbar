@@ -24,20 +24,19 @@ from __future__ import division
 import datetime
 import math
 
-try:
-    from abc import ABCMeta, abstractmethod
-except ImportError:
-    AbstractWidget = object
-    abstractmethod = lambda fn: fn
-else:
-    AbstractWidget = ABCMeta('AbstractWidget', (object,), {})
+from abc import ABCMeta, abstractmethod
+AbstractWidget = ABCMeta('AbstractWidget', (object,), {})
+
 
 class UnknownLength:
-  pass
+    pass
+
 
 def format_updatable(updatable, pbar):
-    if hasattr(updatable, 'update'): return updatable.update(pbar)
-    else: return updatable
+    if hasattr(updatable, 'update'):
+        return updatable.update(pbar)
+    else:
+        return updatable
 
 
 class Widget(AbstractWidget):
@@ -94,7 +93,6 @@ class Timer(Widget):
 
         return str(datetime.timedelta(seconds=int(seconds)))
 
-
     def update(self, pbar):
         """Updates the widget to show the elapsed time."""
 
@@ -110,13 +108,13 @@ class ETA(Timer):
         """Updates the widget to show the ETA or total time when finished."""
 
         if pbar.maxval is UnknownLength or pbar.currval == 0:
-            return 'ETA:  --:--:--'
+            return "ETA:  --:--:--"
         elif pbar.finished:
-            return 'Time: %s' % self.format_time(pbar.seconds_elapsed)
+            return f"Time: {self.format_time(pbar.seconds_elapsed)}"
         else:
             elapsed = pbar.seconds_elapsed
             eta = elapsed * pbar.maxval / pbar.currval - elapsed
-            return 'ETA:  %s' % self.format_time(eta)
+            return f"ETA:  {self.format_time(eta)}"
 
 
 class AdaptiveETA(Timer):
@@ -137,7 +135,7 @@ class AdaptiveETA(Timer):
     def _update_samples(self, currval, elapsed):
         sample = (currval, elapsed)
         if not hasattr(self, 'samples'):
-            self.samples = [sample] * (self.NUM_SAMPLES + 1)
+            self.samples = [[sample] for _ in range(self.NUM_SAMPLES + 1)]
         else:
             self.samples.append(sample)
         return self.samples.pop(0)
@@ -148,9 +146,9 @@ class AdaptiveETA(Timer):
     def update(self, pbar):
         """Updates the widget to show the ETA or total time when finished."""
         if pbar.maxval is UnknownLength or pbar.currval == 0:
-            return 'ETA:  --:--:--'
+            return "ETA:  --:--:--"
         elif pbar.finished:
-            return 'Time: %s' % self.format_time(pbar.seconds_elapsed)
+            return f"Time: {self.format_time(pbar.seconds_elapsed)}"
         else:
             elapsed = pbar.seconds_elapsed
             currval1, elapsed1 = self._update_samples(pbar.currval, elapsed)
@@ -161,7 +159,7 @@ class AdaptiveETA(Timer):
                                     elapsed - elapsed1)
                 weight = (pbar.currval / float(pbar.maxval)) ** 0.5
                 eta = (1 - weight) * eta + weight * etasamp
-            return 'ETA:  %s' % self.format_time(eta)
+            return f"ETA:  {self.format_time(eta)}"
 
 
 class FileTransferSpeed(Widget):
@@ -177,12 +175,12 @@ class FileTransferSpeed(Widget):
     def update(self, pbar):
         """Updates the widget with the current SI prefixed speed."""
 
-        if pbar.seconds_elapsed < 2e-6 or pbar.currval < 2e-6: # =~ 0
+        if pbar.seconds_elapsed < 2e-6 or pbar.currval < 2e-6:  # =~ 0
             scaled = power = 0
         else:
             speed = pbar.currval / pbar.seconds_elapsed
             power = int(math.log(speed, 1000))
-            scaled = speed / 1000.**power
+            scaled = speed / 1000.0 ** power
 
         return self.FMT % (scaled, self.PREFIXES[power], self.unit)
 
@@ -202,10 +200,12 @@ class AnimatedMarker(Widget):
         """Updates the widget to show the next marker or the first marker when
         finished"""
 
-        if pbar.finished: return self.markers[0]
+        if pbar.finished:
+            return self.markers[0]
 
         self.curmark = (self.curmark + 1) % len(self.markers)
         return self.markers[self.curmark]
+
 
 # Alias for backwards compatibility
 RotatingMarker = AnimatedMarker
@@ -227,7 +227,7 @@ class Percentage(Widget):
     """Displays the current percentage as a number with a percent sign."""
 
     def update(self, pbar):
-        return '%3.0f%%' % pbar.percentage()
+        return f"{pbar.percentage():3.0f}%%"
 
 
 class FormatLabel(Timer):
@@ -244,8 +244,9 @@ class FormatLabel(Timer):
     }
 
     __slots__ = ('format_string',)
+
     def __init__(self, format):
-        self.format_string = format
+        super().__init__(format)
 
     def update(self, pbar):
         context = {}
@@ -254,10 +255,11 @@ class FormatLabel(Timer):
                 value = getattr(pbar, key)
 
                 if transform is None:
-                   context[name] = value
+                    context[name] = value
                 else:
-                   context[name] = transform(value)
-            except: pass
+                    context[name] = transform(value)
+            except:
+                pass
 
         return self.format_string % context
 
@@ -272,8 +274,9 @@ class SimpleProgress(Widget):
 
     def update(self, pbar):
         if pbar.maxval is UnknownLength:
-            return '%d%s?' % (pbar.currval, self.sep)
-        return '%d%s%s' % (pbar.currval, self.sep, pbar.maxval)
+            return f"{pbar.currval:d}{self.sep}?"
+        else:
+            return f"{pbar.currval:d}{self.sep}{pbar.maxval}"
 
 
 class Bar(WidgetHFill):
@@ -297,31 +300,30 @@ class Bar(WidgetHFill):
         self.fill = fill
         self.fill_left = fill_left
 
-
     def update(self, pbar, width):
         """Updates the progress bar and its subcomponents."""
 
-        left, marked, right = (format_updatable(i, pbar) for i in
-                               (self.left, self.marker, self.right))
+        left = format_updatable(self.left, pbar)
+        marked = format_updatable(self.marked, pbar)
+        right = format_updatable(self.right, pbar)
 
         width -= len(left) + len(right)
         # Marked must *always* have length of 1
         if pbar.maxval is not UnknownLength and pbar.maxval:
-          marked *= int(pbar.currval / pbar.maxval * width)
+            marked *= int(pbar.currval / pbar.maxval * width)
         else:
-          marked = ''
+            marked = ''
 
         if self.fill_left:
-            return '%s%s%s' % (left, marked.ljust(width, self.fill), right)
+            return f'{left}{marked.ljust(width, self.fill)}{right}'
         else:
-            return '%s%s%s' % (left, marked.rjust(width, self.fill), right)
+            return f'{left}{marked.rjust(width, self.fill)}{right}'
 
 
 class ReverseBar(Bar):
     """A bar which has a marker which bounces from side to side."""
 
-    def __init__(self, marker='#', left='|', right='|', fill=' ',
-                 fill_left=False):
+    def __init__(self, marker='#', left='|', right='|', fill=' ', fill_left=False):
         """Creates a customizable progress bar.
 
         marker - string or updatable object to use as a marker
@@ -330,30 +332,30 @@ class ReverseBar(Bar):
         fill - character to use for the empty part of the progress bar
         fill_left - whether to fill from the left or the right
         """
-        self.marker = marker
-        self.left = left
-        self.right = right
-        self.fill = fill
-        self.fill_left = fill_left
+        super().__init__(marker, left, right, fill, fill_left)
 
 
 class BouncingBar(Bar):
     def update(self, pbar, width):
         """Updates the progress bar and its subcomponents."""
 
-        left, marker, right = (format_updatable(i, pbar) for i in
-                               (self.left, self.marker, self.right))
+        left = format_updatable(self.left, pbar)
+        marker = format_updatable(self.marker, pbar)
+        right = format_updatable(self.right, pbar)
 
         width -= len(left) + len(right)
 
-        if pbar.finished: return '%s%s%s' % (left, width * marker, right)
+        if pbar.finished:
+            return f"{left}{width * marker}{right}"
 
         position = int(pbar.currval % (width * 2 - 1))
-        if position > width: position = width * 2 - position
+        if position > width:
+            position = width * 2 - position
         lpad = self.fill * (position - 1)
         rpad = self.fill * (width - len(marker) - len(lpad))
 
         # Swap if we want to bounce the other way
-        if not self.fill_left: rpad, lpad = lpad, rpad
+        if not self.fill_left:
+            rpad, lpad = lpad, rpad
 
-        return '%s%s%s%s%s' % (left, lpad, marker, rpad, right)
+        return f"{left}{lpad}{marker}{rpad}{right}"
