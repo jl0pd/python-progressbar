@@ -56,7 +56,7 @@ def example2():
         """It's bigger between 45 and 80 percent."""
 
         def update(self, pbar):
-            if 45 < pbar.percentage() < 80:
+            if 45 < pbar.percentage < 80:
                 return 'Bigger Now ' + FileTransferSpeed.update(self, pbar)
             else:
                 return FileTransferSpeed.update(self, pbar)

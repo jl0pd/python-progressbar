@@ -135,7 +135,7 @@ class AdaptiveETA(Timer):
     def _update_samples(self, currval, elapsed):
         sample = (currval, elapsed)
         if not hasattr(self, 'samples'):
-            self.samples = [[sample] for _ in range(self.NUM_SAMPLES + 1)]
+            self.samples = [sample for _ in range(self.NUM_SAMPLES + 1)]
         else:
             self.samples.append(sample)
         return self.samples.pop(0)
@@ -228,7 +228,7 @@ class Percentage(Widget):
     """Displays the current percentage as a number with a percent sign."""
 
     def update(self, pbar):
-        return f"{pbar.percentage():3.0f}%%"
+        return f"{pbar.percentage:3.0f}%%"
 
 
 class FormatLabel(Timer):
@@ -305,20 +305,20 @@ class Bar(WidgetHFill):
         """Updates the progress bar and its subcomponents."""
 
         left = format_updatable(self.left, pbar)
-        marked = format_updatable(self.marked, pbar)
+        marker = format_updatable(self.marker, pbar)
         right = format_updatable(self.right, pbar)
 
         width -= len(left) + len(right)
         # Marked must *always* have length of 1
         if pbar.maxval is not UnknownLength and pbar.maxval:
-            marked *= int(pbar.currval / pbar.maxval * width)
+            marker *= int(pbar.currval / pbar.maxval * width)
         else:
-            marked = ''
+            marker = ''
 
         if self.fill_left:
-            return f'{left}{marked.ljust(width, self.fill)}{right}'
+            return f'{left}{marker.ljust(width, self.fill)}{right}'
         else:
-            return f'{left}{marked.rjust(width, self.fill)}{right}'
+            return f'{left}{marker.rjust(width, self.fill)}{right}'
 
 
 class ReverseBar(Bar):
