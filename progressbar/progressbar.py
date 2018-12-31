@@ -25,10 +25,6 @@ import signal
 import sys
 import time
 
-from fcntl import ioctl
-from array import array
-import termios
-
 from . import widgets
 
 
@@ -124,7 +120,6 @@ class ProgressBar(object):
 
     def __call__(self, iterable):
         """Use a ProgressBar to iterate through an iterable."""
-
         try:
             self.maxval = len(iterable)
         except:
@@ -153,13 +148,11 @@ class ProgressBar(object):
 
     def _env_size(self):
         """Tries to find the term_width from the environment."""
-
         return int(os.environ.get('COLUMNS', self._DEFAULT_TERMSIZE)) - 1
 
     def _handle_resize(self, signum=None, frame=None):
         """Tries to catch resize signals sent from the terminal."""
-
-        h, w = array('h', ioctl(self.fd, termios.TIOCGWINSZ, '\0' * 8))[:2]
+        w, h = os.get_terminal_size()
         self.term_width = w
 
     @property
