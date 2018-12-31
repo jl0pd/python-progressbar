@@ -20,11 +20,11 @@ def example(fn):
 
     def wrapped():
         try:
-            sys.stdout.write('Running: %s\n' % name)
+            sys.stdout.write(f"Running: {name}\n")
             fn()
             sys.stdout.write('\n')
         except KeyboardInterrupt:
-            sys.stdout.write('\nSkipping example.\n\n')
+            sys.stdout.write("\nSkipping example.\n\n")
 
     examples.append(wrapped)
     return wrapped

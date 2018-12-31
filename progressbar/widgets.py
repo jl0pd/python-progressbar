@@ -19,7 +19,6 @@
 
 """Default ProgressBar widgets."""
 
-from __future__ import division
 
 import datetime
 import math
@@ -228,7 +227,7 @@ class Percentage(Widget):
     """Displays the current percentage as a number with a percent sign."""
 
     def update(self, pbar):
-        return f"{pbar.percentage:3.0f}%%"
+        return f"{pbar.percentage:3.0f}%"
 
 
 class FormatLabel(Timer):
